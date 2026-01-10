@@ -1,8 +1,8 @@
 import type {
-  AgentMode,
-  Nullable,
-  PostProcessingMode,
-  TranscriptionMode,
+    AgentMode,
+    Nullable,
+    PostProcessingMode,
+    TranscriptionMode,
 } from "./common.types";
 
 export type UserPreferences = {
@@ -22,4 +22,8 @@ export type UserPreferences = {
   agentModeApiKeyId: Nullable<string>;
   lastSeenFeature: Nullable<string>;
   isEnterprise: boolean;
+  /** Secondary dictation language for quick switching */
+  secondaryLanguage: Nullable<string>;
+  /** Whether language switching hotkey is enabled */
+  languageSwitchingEnabled: boolean;
 };

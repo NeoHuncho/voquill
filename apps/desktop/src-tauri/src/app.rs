@@ -173,6 +173,7 @@ pub fn build() -> tauri::Builder<tauri::Wry> {
             crate::commands::get_text_field_info,
             crate::commands::get_screen_context,
             crate::commands::get_selected_text,
+            crate::commands::update_tray_title,
         ])
 }
 

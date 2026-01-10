@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   CircularProgress,
   Dialog,
@@ -6,11 +7,18 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
+  Switch,
   Typography,
 } from "@mui/material";
 import { FormattedMessage } from "react-intl";
+import { setLanguageSwitchingEnabled } from "../../actions/user.actions";
 import { produceAppState, useAppStore } from "../../store";
-import { AGENT_DICTATE_HOTKEY, DICTATE_HOTKEY } from "../../utils/keyboard.utils";
+import {
+  AGENT_DICTATE_HOTKEY,
+  DICTATE_HOTKEY,
+  SWITCH_LANGUAGE_HOTKEY,
+} from "../../utils/keyboard.utils";
+import { getMyUserPreferences } from "../../utils/user.utils";
 import { HotkeySetting } from "./HotkeySetting";
 
 export const ShortcutsDialog = () => {
@@ -19,10 +27,21 @@ export const ShortcutsDialog = () => {
     hotkeysStatus: state.settings.hotkeysStatus,
   }));
 
+  const languageSwitchingEnabled = useAppStore(
+    (state) => getMyUserPreferences(state)?.languageSwitchingEnabled ?? false,
+  );
+
   const handleClose = () => {
     produceAppState((draft) => {
       draft.settings.shortcutsDialogOpen = false;
     });
+  };
+
+  const handleToggleLanguageSwitching = (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const enabled = event.target.checked;
+    void setLanguageSwitchingEnabled(enabled);
   };
 
   const renderContent = () => {
@@ -55,6 +74,44 @@ export const ShortcutsDialog = () => {
           }
           actionName={AGENT_DICTATE_HOTKEY}
         />
+
+        <Box>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="flex-start"
+            sx={{ mb: 2 }}
+          >
+            <Stack spacing={1} flex={1}>
+              <Typography variant="body1" fontWeight="bold">
+                <FormattedMessage defaultMessage="Switch dictation language" />
+              </Typography>
+              <Typography variant="body2">
+                <FormattedMessage defaultMessage="Quickly switch between your primary and secondary dictation languages." />
+              </Typography>
+            </Stack>
+            <Switch
+              checked={languageSwitchingEnabled}
+              onChange={handleToggleLanguageSwitching}
+            />
+          </Stack>
+
+          {languageSwitchingEnabled && (
+            <Box sx={{ pl: 2 }}>
+              <HotkeySetting
+                title={
+                  <FormattedMessage defaultMessage="Language switch hotkey" />
+                }
+                description={
+                  <FormattedMessage defaultMessage="Press to toggle between primary and secondary language." />
+                }
+                actionName={SWITCH_LANGUAGE_HOTKEY}
+                buttonSize="small"
+                hideActionButtons
+              />
+            </Box>
+          )}
+        </Box>
       </Stack>
     );
   };

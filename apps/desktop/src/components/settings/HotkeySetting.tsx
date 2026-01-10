@@ -16,6 +16,7 @@ export type HotkeySettingProps = {
   description: ReactNode;
   actionName: string;
   buttonSize?: "small" | "medium";
+  hideActionButtons?: boolean;
 };
 
 const areCombosEqual = (a: string[], b: string[]) =>
@@ -26,6 +27,7 @@ export const HotkeySetting = ({
   description,
   actionName,
   buttonSize = "small",
+  hideActionButtons = false,
 }: HotkeySettingProps) => {
   const hotkeys = useAppStore((state) =>
     state.settings.hotkeyIds
@@ -115,7 +117,7 @@ export const HotkeySetting = ({
       <Stack spacing={1} alignItems="flex-end">
         <Stack direction="row" spacing={1} alignItems="center">
           <HotKey value={primaryValue} onChange={handlePrimaryChange} />
-          {primaryHotkey && defaultCombos.length === 0 && (
+          {!hideActionButtons && primaryHotkey && defaultCombos.length === 0 && (
             <IconButton
               size="small"
               onClick={() => handleDeleteHotkey(primaryHotkey.id)}
@@ -123,7 +125,8 @@ export const HotkeySetting = ({
               <Close color="disabled" />
             </IconButton>
           )}
-          {primaryHotkey &&
+          {!hideActionButtons &&
+            primaryHotkey &&
             defaultCombos.length > 0 &&
             !isPrimaryUsingDefault && (
               <IconButton
@@ -135,36 +138,39 @@ export const HotkeySetting = ({
               </IconButton>
             )}
         </Stack>
-        {additionalHotkeys.map((hotkey) => (
-          <Stack
-            key={hotkey.id}
-            direction="row"
-            spacing={1}
-            alignItems="center"
-          >
-            <HotKey
-              value={hotkey.keys}
-              onChange={(keys) => saveKey(hotkey.id, keys)}
-            />
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteHotkey(hotkey.id)}
+        {!hideActionButtons &&
+          additionalHotkeys.map((hotkey) => (
+            <Stack
+              key={hotkey.id}
+              direction="row"
+              spacing={1}
+              alignItems="center"
             >
-              <Close color="disabled" />
-            </IconButton>
-          </Stack>
-        ))}
-        <Button
-          variant="text"
-          startIcon={<Add />}
-          size={buttonSize}
-          sx={{ py: 0.5 }}
-          onClick={() => saveKey()}
-        >
-          <Typography variant="body2" fontWeight={500}>
-            {buttonLabel}
-          </Typography>
-        </Button>
+              <HotKey
+                value={hotkey.keys}
+                onChange={(keys) => saveKey(hotkey.id, keys)}
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteHotkey(hotkey.id)}
+              >
+                <Close color="disabled" />
+              </IconButton>
+            </Stack>
+          ))}
+        {!hideActionButtons && (
+          <Button
+            variant="text"
+            startIcon={<Add />}
+            size={buttonSize}
+            sx={{ py: 0.5 }}
+            onClick={() => saveKey()}
+          >
+            <Typography variant="body2" fontWeight={500}>
+              {buttonLabel}
+            </Typography>
+          </Button>
+        )}
       </Stack>
     </Stack>
   );

@@ -1,16 +1,16 @@
 import { HandlerOutput } from "@repo/functions";
 import {
-  ApiKey,
-  AppTarget,
-  FullConfig,
-  Hotkey,
-  Member,
-  Nullable,
-  Term,
-  Tone,
-  Transcription,
-  User,
-  UserPreferences,
+    ApiKey,
+    AppTarget,
+    FullConfig,
+    Hotkey,
+    Member,
+    Nullable,
+    Term,
+    Tone,
+    Transcription,
+    User,
+    UserPreferences,
 } from "@repo/types";
 import { AuthUser } from "../types/auth.types";
 import { OverlayPhase } from "../types/overlay.types";
@@ -20,20 +20,25 @@ import { AgentState, INITIAL_AGENT_STATE } from "./agent.state";
 import { DictionaryState, INITIAL_DICTIONARY_STATE } from "./dictionary.state";
 import { INITIAL_LOGIN_STATE, LoginState } from "./login.state";
 import {
-  INITIAL_ONBOARDING_STATE,
-  type OnboardingState,
+    INITIAL_ONBOARDING_STATE,
+    type OnboardingState,
 } from "./onboarding.state";
 import { INITIAL_PAYMENT_STATE, PaymentState } from "./payment.state";
 import { INITIAL_PRICING_STATE, PricingState } from "./pricing.state";
 import { INITIAL_SETTINGS_STATE, SettingsState } from "./settings.state";
 import {
+<<<<<<< HEAD
   INITIAL_TONE_EDITOR_STATE,
   ToneEditorState,
+=======
+    INITIAL_TONE_EDITOR_STATE,
+    ToneEditorState,
+>>>>>>> 5fb8c86 (feat: secondary language implementation)
 } from "./tone-editor.state";
 import { INITIAL_TONES_STATE, TonesState } from "./tones.state";
 import {
-  INITIAL_TRANSCRIPTIONS_STATE,
-  TranscriptionsState,
+    INITIAL_TRANSCRIPTIONS_STATE,
+    TranscriptionsState,
 } from "./transcriptions.state";
 import { INITIAL_TUTORIAL_STATE, TutorialState } from "./tutorial.state";
 import { INITIAL_UPDATER_STATE, UpdaterState } from "./updater.state";
@@ -43,6 +48,9 @@ export type SnackbarMode = "info" | "success" | "error";
 export type RecordingMode = "dictate" | "agent";
 
 export type PriceValue = HandlerOutput<"stripe/getPrices">["prices"];
+
+/** Whether using primary or secondary dictation language */
+export type ActiveLanguageMode = "primary" | "secondary";
 
 export type AppState = {
   initialized: boolean;
@@ -55,6 +63,8 @@ export type AppState = {
   permissions: PermissionMap;
   confettiCounter: number;
   userPrefs: Nullable<UserPreferences>;
+  /** Which dictation language is currently active */
+  activeLanguageMode: ActiveLanguageMode;
 
   memberById: Record<string, Member>;
   userById: Record<string, User>;
@@ -114,6 +124,7 @@ export const INITIAL_APP_STATE: AppState = {
   config: null,
   keysHeld: [],
   initialized: false,
+  activeLanguageMode: "primary",
   snackbarCounter: 0,
   snackbarMode: "info",
   snackbarDuration: 3000,

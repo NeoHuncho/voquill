@@ -1,7 +1,7 @@
 import { getRec } from "@repo/utilities";
 import { invoke } from "@tauri-apps/api/core";
 import { isEqual } from "lodash-es";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useIntl } from "react-intl";
 import { trackAgentStart, trackDictationStart } from "../../utils/analytics.utils";
 import { loadApiKeys } from "../../actions/api-key.actions";
@@ -9,7 +9,7 @@ import {
   loadAppTargets,
   tryRegisterCurrentAppTarget,
 } from "../../actions/app-target.actions";
-import { showErrorSnackbar } from "../../actions/app.actions";
+import { showErrorSnackbar, showInfoSnackbar } from "../../actions/app.actions";
 import { loadDictionary } from "../../actions/dictionary.actions";
 import { loadHotkeys } from "../../actions/hotkey.actions";
 import { handleGoogleAuthPayload } from "../../actions/login.actions";
@@ -19,9 +19,10 @@ import { syncAutoLaunchSetting } from "../../actions/settings.actions";
 import { showToast } from "../../actions/toast.actions";
 import { loadTones } from "../../actions/tone.actions";
 import { checkForAppUpdates } from "../../actions/updater.actions";
+import { toggleActiveLanguage } from "../../actions/user.actions";
 import { useAsyncEffect } from "../../hooks/async.hooks";
 import { useIntervalAsync } from "../../hooks/helper.hooks";
-import { useHotkeyHold } from "../../hooks/hotkey.hooks";
+import { useHotkeyFire, useHotkeyHold } from "../../hooks/hotkey.hooks";
 import { useTauriListen } from "../../hooks/tauri.hooks";
 import { createTranscriptionSession } from "../../sessions";
 import type { RecordingMode } from "../../state/app.state";
@@ -41,14 +42,24 @@ import {
 } from "../../types/transcription-session.types";
 import { playAlertSound, tryPlayAudioChime } from "../../utils/audio.utils";
 import {
+<<<<<<< HEAD
   AGENT_DICTATE_HOTKEY,
   DICTATE_HOTKEY,
 } from "../../utils/keyboard.utils";
 import { getMemberExceedsLimitByState } from "../../utils/member.utils";
+=======
+  DICTATE_HOTKEY,
+  SWITCH_LANGUAGE_HOTKEY,
+} from "../../utils/keyboard.utils";
+import { getDisplayNameForLanguage } from "../../utils/language.utils";
+import { getMemberExceedsWordLimitByState } from "../../utils/member.utils";
+>>>>>>> 5fb8c86 (feat: secondary language implementation)
 import { isPermissionAuthorized } from "../../utils/permission.utils";
 import {
+  getActiveLanguageCode,
   getIsOnboarded,
   getMyUser,
+  getMyUserPreferences,
   getTranscriptionPrefs,
 } from "../../utils/user.utils";
 import {
@@ -398,6 +409,52 @@ export const RootSideEffects = () => {
     onActivate: startAgentRecording,
     onDeactivate: stopAgentRecording,
   });
+
+  // Language switching hotkey
+  const languageSwitchingEnabled = useAppStore(
+    (state) => getMyUserPreferences(state)?.languageSwitchingEnabled ?? false,
+  );
+
+  const handleLanguageSwitch = useCallback(() => {
+    const state = getAppState();
+    const prefs = getMyUserPreferences(state);
+    if (!prefs?.languageSwitchingEnabled || !prefs?.secondaryLanguage) {
+      return;
+    }
+
+    toggleActiveLanguage();
+
+    // Get the new active language after toggling
+    const newState = getAppState();
+    const newLanguageCode = getActiveLanguageCode(newState);
+    const newLanguage =
+      newState.activeLanguageMode === "secondary"
+        ? prefs.secondaryLanguage
+        : getMyUser(newState)?.preferredLanguage ?? "en";
+    const languageName = getDisplayNameForLanguage(newLanguage);
+
+    showInfoSnackbar(`Language: ${languageName} (${newLanguageCode})`);
+
+    // Update tray icon title with language code
+    void invoke("update_tray_title", { title: newLanguageCode });
+  }, []);
+
+  useHotkeyFire({
+    actionName: SWITCH_LANGUAGE_HOTKEY,
+    onFire: languageSwitchingEnabled ? handleLanguageSwitch : undefined,
+  });
+
+  // Update tray title when language switching is enabled/disabled or language mode changes
+  const activeLanguageMode = useAppStore((state) => state.activeLanguageMode);
+  useEffect(() => {
+    if (languageSwitchingEnabled) {
+      const state = getAppState();
+      const languageCode = getActiveLanguageCode(state);
+      void invoke("update_tray_title", { title: languageCode });
+    } else {
+      void invoke("update_tray_title", { title: null });
+    }
+  }, [languageSwitchingEnabled, activeLanguageMode]);
 
   useTauriListen<void>(REGISTER_CURRENT_APP_EVENT, async () => {
     await tryRegisterCurrentAppTarget();

@@ -1122,3 +1122,30 @@ pub async fn get_selected_text() -> Result<Option<String>, String> {
         .await
         .map_err(|err| err.to_string())
 }
+
+#[tauri::command]
+pub fn update_tray_title(app: AppHandle, title: Option<String>) -> Result<(), String> {
+    use tauri::tray::TrayIconId;
+
+    let tray_id = TrayIconId::new("main");
+    let tray = app
+        .tray_by_id(&tray_id)
+        .ok_or_else(|| "Tray icon not found".to_string())?;
+
+    let tooltip = match &title {
+        Some(lang_code) => format!("Voquill - {}", lang_code),
+        None => "Voquill".to_string(),
+    };
+
+    tray.set_tooltip(Some(&tooltip))
+        .map_err(|err| err.to_string())?;
+
+    // On macOS, we can use the title to show text next to the icon
+    #[cfg(target_os = "macos")]
+    {
+        tray.set_title(title.as_deref())
+            .map_err(|err| err.to_string())?;
+    }
+
+    Ok(())
+}

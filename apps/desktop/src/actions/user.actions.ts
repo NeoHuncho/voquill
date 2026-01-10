@@ -3,18 +3,18 @@ import { getUserPreferencesRepo, getUserRepo } from "../repos";
 import { CloudUserRepo } from "../repos/user.repo";
 import { getAppState, produceAppState } from "../store";
 import {
-  DEFAULT_POST_PROCESSING_MODE,
-  DEFAULT_TRANSCRIPTION_MODE,
-  type PostProcessingMode,
-  type TranscriptionMode,
+    DEFAULT_POST_PROCESSING_MODE,
+    DEFAULT_TRANSCRIPTION_MODE,
+    type PostProcessingMode,
+    type TranscriptionMode,
 } from "../types/ai.types";
 import {
-  getMyEffectiveUserId,
-  getMyUser,
-  getMyUserPreferences,
-  LOCAL_USER_ID,
-  setCurrentUser,
-  setUserPreferences,
+    getMyEffectiveUserId,
+    getMyUser,
+    getMyUserPreferences,
+    LOCAL_USER_ID,
+    setCurrentUser,
+    setUserPreferences,
 } from "../utils/user.utils";
 import { showErrorSnackbar } from "./app.actions";
 
@@ -63,10 +63,15 @@ export const createDefaultPreferences = (): UserPreferences => ({
   activeToneId: null,
   gotStartedAt: null,
   gpuEnumerationEnabled: false,
+<<<<<<< HEAD
   agentMode: null,
   agentModeApiKeyId: null,
   lastSeenFeature: null,
   isEnterprise: false,
+=======
+  secondaryLanguage: null,
+  languageSwitchingEnabled: false,
+>>>>>>> 5fb8c86 (feat: secondary language implementation)
 });
 
 const updateUserPreferences = async (
@@ -378,8 +383,49 @@ export const clearGotStartedAt = async (): Promise<void> => {
   }, "Failed to clear got started timestamp. Please try again.");
 };
 
+<<<<<<< HEAD
 export const markFeatureSeen = async (feature: string): Promise<void> => {
   await updateUserPreferences((preferences) => {
     preferences.lastSeenFeature = feature;
   }, "Failed to save feature seen status. Please try again.");
+=======
+export const setSecondaryLanguage = async (
+  language: Nullable<string>,
+): Promise<void> => {
+  await updateUserPreferences((preferences) => {
+    preferences.secondaryLanguage = language;
+  }, "Failed to save secondary language. Please try again.");
+};
+
+export const setLanguageSwitchingEnabled = async (
+  enabled: boolean,
+): Promise<void> => {
+  await updateUserPreferences((preferences) => {
+    preferences.languageSwitchingEnabled = enabled;
+
+    // When enabling, set the default secondary language if not already set
+    if (enabled && !preferences.secondaryLanguage) {
+      const state = getAppState();
+      const user = getMyUser(state);
+      const primaryLanguage = user?.preferredLanguage ?? "en";
+      // Default secondary language: French if primary is English, otherwise English
+      preferences.secondaryLanguage = primaryLanguage.startsWith("en")
+        ? "fr"
+        : "en";
+    }
+  }, "Failed to save language switching preference. Please try again.");
+};
+
+export const toggleActiveLanguage = (): void => {
+  produceAppState((draft) => {
+    draft.activeLanguageMode =
+      draft.activeLanguageMode === "primary" ? "secondary" : "primary";
+  });
+};
+
+export const resetActiveLanguage = (): void => {
+  produceAppState((draft) => {
+    draft.activeLanguageMode = "primary";
+  });
+>>>>>>> 5fb8c86 (feat: secondary language implementation)
 };

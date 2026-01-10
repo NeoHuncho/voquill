@@ -66,6 +66,35 @@ export const getMyDictationLanguage = (state: AppState): string => {
   return getDetectedSystemLocale();
 };
 
+/**
+ * Get the currently active dictation language, considering primary/secondary switching.
+ * Returns the active language based on the activeLanguageMode state.
+ */
+export const getActiveDictationLanguage = (state: AppState): string => {
+  const preferences = getMyUserPreferences(state);
+  const primaryLanguage = getMyDictationLanguage(state);
+
+  if (
+    state.activeLanguageMode === "secondary" &&
+    preferences?.languageSwitchingEnabled &&
+    preferences?.secondaryLanguage
+  ) {
+    return preferences.secondaryLanguage;
+  }
+
+  return primaryLanguage;
+};
+
+/**
+ * Get the two-letter language code for display in the tray icon.
+ */
+export const getActiveLanguageCode = (state: AppState): string => {
+  const language = getActiveDictationLanguage(state);
+  // Extract the base language code (e.g., "en" from "en-US")
+  const baseCode = language.split("-")[0];
+  return baseCode.toUpperCase().slice(0, 2);
+};
+
 export const getMyUserPreferences = (
   state: AppState,
 ): Nullable<UserPreferences> => {

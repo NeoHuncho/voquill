@@ -23,10 +23,12 @@ pub async fn upsert_user_preferences(
              got_started_at,
              gpu_enumeration_enabled,
              paste_keybind,
-             last_seen_feature,
-             is_enterprise
-         )
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17)
+            last_seen_feature,
+            is_enterprise,
+            secondary_language,
+            language_switching_enabled
+        )
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18, ?19)
          ON CONFLICT(user_id) DO UPDATE SET
             transcription_mode = excluded.transcription_mode,
             transcription_api_key_id = excluded.transcription_api_key_id,
@@ -43,7 +45,9 @@ pub async fn upsert_user_preferences(
             gpu_enumeration_enabled = excluded.gpu_enumeration_enabled,
             paste_keybind = excluded.paste_keybind,
             last_seen_feature = excluded.last_seen_feature,
-            is_enterprise = excluded.is_enterprise",
+            is_enterprise = excluded.is_enterprise,
+            secondary_language = excluded.secondary_language,
+            language_switching_enabled = excluded.language_switching_enabled",
     )
     .bind(&preferences.user_id)
     .bind(&preferences.transcription_mode)
@@ -62,6 +66,8 @@ pub async fn upsert_user_preferences(
     .bind(&preferences.paste_keybind)
     .bind(&preferences.last_seen_feature)
     .bind(preferences.is_enterprise)
+    .bind(&preferences.secondary_language)
+    .bind(preferences.language_switching_enabled)
     .execute(&pool)
     .await?;
 
@@ -90,8 +96,10 @@ pub async fn fetch_user_preferences(
             gpu_enumeration_enabled,
             paste_keybind,
             last_seen_feature,
-            is_enterprise
-         FROM user_preferences
+            is_enterprise,
+            secondary_language,
+            language_switching_enabled
+        FROM user_preferences
          WHERE user_id = ?1
          LIMIT 1",
     )
@@ -149,6 +157,13 @@ pub async fn fetch_user_preferences(
             .unwrap_or(None),
         is_enterprise: row
             .try_get::<i64, _>("is_enterprise")
+            .map(|v| v != 0)
+            .unwrap_or(false),
+        secondary_language: row
+            .try_get::<Option<String>, _>("secondary_language")
+            .unwrap_or(None),
+        language_switching_enabled: row
+            .try_get::<i64, _>("language_switching_enabled")
             .map(|v| v != 0)
             .unwrap_or(false),
     });

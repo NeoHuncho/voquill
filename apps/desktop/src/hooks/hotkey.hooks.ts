@@ -185,22 +185,35 @@ export const useHotkeyFire = (args: {
   const availableCombos = useAppStore((state) =>
     getHotkeyCombosForAction(state, args.actionName),
   );
+  const onFireRef = useRef(args.onFire);
+
+  useEffect(() => {
+    onFireRef.current = args.onFire;
+  }, [args.onFire]);
 
   const previousKeysHeldRef = useRef<string[]>([]);
 
   useEffect(() => {
     const previousKeysHeld = previousKeysHeldRef.current;
 
+    const normalize = (key: string) => key.toLowerCase();
+
     // Check if any combo was just pressed (transition from not pressed to pressed)
     const wasComboPressed = availableCombos.some((combo) => {
-      if (combo.keys.length === 0) return false;
+      if (combo.length === 0) return false;
+
+      const normalizedCombo = combo.map(normalize);
+      const normalizedKeysHeld = keysHeld.map(normalize);
+      const normalizedPrevious = previousKeysHeld.map(normalize);
 
       // Check if all keys in the combo are NOW held
-      const allKeysNowHeld = combo.every((key) => keysHeld.includes(key));
+      const allKeysNowHeld = normalizedCombo.every((key) =>
+        normalizedKeysHeld.includes(key),
+      );
 
       // Check if NOT all keys were held previously
-      const notAllKeysPreviouslyHeld = !combo.every((key) =>
-        previousKeysHeld.includes(key),
+      const notAllKeysPreviouslyHeld = !normalizedCombo.every((key) =>
+        normalizedPrevious.includes(key),
       );
 
       // Fire only on the transition from not-pressed to pressed
@@ -208,10 +221,10 @@ export const useHotkeyFire = (args: {
     });
 
     if (wasComboPressed) {
-      args.onFire?.();
+      onFireRef.current?.();
     }
 
     // Update the ref for the next comparison
     previousKeysHeldRef.current = keysHeld;
-  }, [keysHeld, availableCombos, args]);
+  }, [keysHeld, availableCombos]);
 };

@@ -14,6 +14,7 @@ import {
   PersonRemoveOutlined,
   PrivacyTipOutlined,
   RocketLaunchOutlined,
+  SwapHorizOutlined,
   VolumeUpOutlined,
   WarningAmberOutlined,
 } from "@mui/icons-material";
@@ -35,7 +36,10 @@ import { FormattedMessage, useIntl } from "react-intl";
 import { showErrorSnackbar } from "../../actions/app.actions";
 import { setAutoLaunchEnabled } from "../../actions/settings.actions";
 import { loadTones } from "../../actions/tone.actions";
-import { setPreferredLanguage } from "../../actions/user.actions";
+import {
+  setPreferredLanguage,
+  setSecondaryLanguage,
+} from "../../actions/user.actions";
 import { getAuthRepo } from "../../repos";
 import { produceAppState, useAppStore } from "../../store";
 import {
@@ -48,6 +52,7 @@ import {
   getHasEmailProvider,
   getIsSignedIn,
   getMyUser,
+  getMyUserPreferences,
 } from "../../utils/user.utils";
 import { ListTile } from "../common/ListTile";
 import { Section } from "../common/Section";
@@ -69,6 +74,19 @@ export default function SettingsPage() {
   const dictationLanguage = useAppStore((state) => {
     const user = getMyUser(state);
     return user?.preferredLanguage ?? getDetectedSystemLocale();
+  });
+
+  const languageSwitchingEnabled = useAppStore(
+    (state) => getMyUserPreferences(state)?.languageSwitchingEnabled ?? false,
+  );
+
+  const secondaryLanguage = useAppStore((state) => {
+    const prefs = getMyUserPreferences(state);
+    if (prefs?.secondaryLanguage) {
+      return prefs.secondaryLanguage;
+    }
+    // Default secondary language: French if primary is English, otherwise English
+    return dictationLanguage.startsWith("en") ? "fr" : "en";
   });
 
   const dictationLanguageWarning = useAppStore((state) => {
@@ -94,6 +112,11 @@ export default function SettingsPage() {
     void setPreferredLanguage(nextValue).then(() => {
       loadTones();
     });
+  };
+
+  const handleSecondaryLanguageChange = (event: SelectChangeEvent<string>) => {
+    const nextValue = event.target.value;
+    void setSecondaryLanguage(nextValue);
   };
 
   const openChangePasswordDialog = () => {
@@ -278,6 +301,46 @@ export default function SettingsPage() {
           </Box>
         }
       />
+      {languageSwitchingEnabled && (
+        <ListTile
+          title={<FormattedMessage defaultMessage="Secondary language" />}
+          leading={<SwapHorizOutlined />}
+          disableRipple={true}
+          trailing={
+            <Box
+              onClick={(event) => event.stopPropagation()}
+              sx={{
+                minWidth: 200,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
+            >
+              <Select
+                value={secondaryLanguage}
+                onChange={handleSecondaryLanguageChange}
+                size="small"
+                variant="outlined"
+                fullWidth
+                inputProps={{ "aria-label": "Secondary language" }}
+                MenuProps={{
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300,
+                    },
+                  },
+                }}
+              >
+                {DICTATION_LANGUAGE_OPTIONS.map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </Box>
+          }
+        />
+      )}
       <ListTile
         title={<FormattedMessage defaultMessage="AI transcription" />}
         leading={<GraphicEqOutlined />}
